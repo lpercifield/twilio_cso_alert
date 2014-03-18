@@ -138,7 +138,7 @@ twiml.message("Unsubscribe coming soon... use 'status' for CSO status");
 					}
 					if(mes){
 						//twiml.message(mes);
-						twiml.message("For current CSO status send - status. Signup for alerts coming soon! BTW: " + mes);
+						twiml.message("For current CSO status send - status. Signup - to receive CSO alerts, Stop - cancel alerts BTW: " + mes);
 					}
 					res.type('text/xml');
 					res.send(twiml.toString());
@@ -147,7 +147,7 @@ twiml.message("Unsubscribe coming soon... use 'status' for CSO status");
 				break;
 			default:
 				console.log("default");
-				twiml.message("Sorry, I didn't understand... use 'status' for CSO status");
+				twiml.message("Sorry, I didn't understand... use Status for CSO status or Help");
 				res.type('text/xml');
 				res.send(twiml.toString());
 				break;		
@@ -168,7 +168,7 @@ exports.sendAlerts = function(twilioRest,db,encryption) {
 			twilioRest.sendMessage({
 
 		    to:encryption.decrypt(user.number), // Any number Twilio can deliver to
-		    from: '+16463500415', // A number you bought from Twilio and can use for outbound communication
+		    from: '+16465767448', // A number you bought from Twilio and can use for outbound communication
 		    body: 'Watchout! CSOs may be overflowing right now!' // body of the SMS message
 
 			}).then(function(responseData) { //this function is executed when a response is received from Twilio
@@ -213,7 +213,7 @@ collection.find().toArray(function(err,doc){
 
 function getStatus(db,callback){
 	var collection = db.get('locations');
-	collection.findOne({"location":"20"},function(err,o){
+	collection.findOne({"location":"15"},function(err,o){
 		if(err){
 			console.log("get status error")
 			callback(null,"Yikes... somethings wrong...")

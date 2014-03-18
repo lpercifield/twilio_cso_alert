@@ -40,12 +40,16 @@ if ('development' == app.get('env')) {
   app.use(express.errorHandler());
 }
 
+/*
 app.get('/', routes.index);
 app.get('/users', user.list);
+*/
 app.get('/helloworld', routes.helloworld);
+/*
 app.get('/userlist', routes.userlist(db));
 app.get('/newuser', routes.newuser);
 app.post('/adduser', routes.adduser(db));
+*/
 app.post('/trigger', function(req,res){
   console.log(req.body.body);
   if (req){
@@ -95,7 +99,7 @@ function saveTrigger(obj){
 	    }
 			if(current >0){
 				o.last_alert = newnow;
-				if(tds == "20"){
+				if(tds == "15"){
 					sms.sendAlerts(twilioRest,db,encryption);
 				}
 				
