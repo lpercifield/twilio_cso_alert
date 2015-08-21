@@ -9,7 +9,7 @@
     "express": "3.4.4",
     "jade": "*",
     "mongodb": "*",
-    "monk": "*",
+    "monk": "0.7.1",
     "twilio": "~1.6.0",
     "forever": "~0.10.11",
     "xively": "0.0.1",
