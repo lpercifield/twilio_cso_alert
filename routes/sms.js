@@ -136,6 +136,7 @@ twiml.message("Unsubscribe coming soon... use 'status' for CSO status");
 				console.log("help");
 				getStatus(db,function(err,mes){
 					if(err){
+						console.log("somethings wrong in help")
 						twiml.message("Yikes... somethings wrong...");
 					}
 					if(mes){
