@@ -13,7 +13,7 @@ var path = require('path');
 var mongo = require('mongodb');
 var monk = require('monk');
 var config = require('./config.json');
-var db = monk('10.0.0.4:27017/smsalert');
+var db = monk('10.0.0.4/smsalert');
 var twilio = require('twilio');
 var twilioRest = require('twilio')(config.TWILIO_ACCOUNT_SID, config.TWILIO_AUTH_TOKEN);
 var config = require('./config');
@@ -62,7 +62,7 @@ app.post('/trigger', function(req,res){
         //alert(e); //error in the above string(in this case,yes)!
         console.log(e);
         res.end(e.toString());
-        
+
     }
   }
 });
@@ -102,7 +102,7 @@ function saveTrigger(obj){
 				if(tds == "15"){
 					sms.sendAlerts(twilioRest,db,encryption);
 				}
-				
+
 			}
 			console.log(util.inspect(o));
 				collection.update({'location':tds},o,{ upsert: true }, function (err, doc) {
@@ -128,7 +128,7 @@ http.createServer(app).listen(app.get('port'), function(){
 });
 
 
- 
+
 var hw = encryption.encrypt("hello world")
 console.log(hw);
 console.log(encryption.decrypt(hw));

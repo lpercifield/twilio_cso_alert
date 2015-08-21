@@ -21,7 +21,7 @@ return function(req, res) {
 				console.log("status");
 				getStatus(db,function(err,mes){
 					if(err){
-						
+
 					}
 					if(mes){
 						twiml.message(mes);
@@ -122,7 +122,7 @@ twiml.message("Unsubscribe coming soon... use 'status' for CSO status");
 */
 			case "stop":
 				console.log("stop");
-				
+
 				removeUser(db,from,function(err,mes){
 					if(mes){
 						twiml.message(mes);
@@ -188,10 +188,10 @@ twiml.message("Unsubscribe coming soon... use 'status' for CSO status");
 				twiml.message("Sorry, I didn't understand... use Status for CSO status or Help");
 				res.type('text/xml');
 				res.send(twiml.toString());
-				break;		
+				break;
 		}
 	}
-	} 
+	}
 }
 
 exports.sendAlerts = function(twilioRest,db,encryption) {
@@ -209,20 +209,20 @@ exports.sendAlerts = function(twilioRest,db,encryption) {
 			if(timeSinceLastSMS > 43200){ //43200 = 12 hrs
 				//Send an SMS text message
 				twilioRest.sendMessage({
-	
+
 			    to:encryption.decrypt(user.number), // Any number Twilio can deliver to
 			    from: '+16465767448', // A number you bought from Twilio and can use for outbound communication
 			    body: 'Watchout! CSOs may be overflowing right now! - reply help, about, or stop' // body of the SMS message
-	
+
 				}).then(function(responseData) { //this function is executed when a response is received from Twilio
-	
+
 	        // "responseData" is a JavaScript object containing data received from Twilio.
 	        // A sample response from sending an SMS message is here (click "JSON" to see how the data appears in JavaScript):
 	        // http://www.twilio.com/docs/api/rest/sending-sms#example-1
-	
+
 	        //console.log(responseData.to); // outputs "+14506667788"
 	        //console.log(responseData.body); // outputs "word to your mother."
-	
+
 	        var newnow = moment().tz("America/New_York").format('lll');
 	        var toNum = encryption.encrypt(responseData.to);
 	        //user.last_message_sent = newnow;
@@ -308,8 +308,8 @@ function getStatus(db,callback){
 				callback(null,"Looks like you're good! Last Overflow: " + o.last_alert);
 			}
 		}else{
-			callback(null,"Yikes... somethings wrong...")
 			console.log("Status: Yikes! not available");
+			callback(null,"Yikes... somethings wrong...")
 		}
 	});
 }
