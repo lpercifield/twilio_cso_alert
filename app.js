@@ -120,7 +120,7 @@ function saveTrigger(obj){
 	}
 }
 
-app.post('/sms', twilio.webhook({validate:process.env.NODE_ENV === 'production'}), sms.incomingSMS(twilio,db,encryption));
+app.post('/sms', twilio.webhook({validate:process.env.NODE_ENV === 'production'}), sms.incomingSMS(twilio,twilioRest,db,encryption));
 //validate:false
 //validate:process.env.NODE_ENV === 'production'
 http.createServer(app).listen(app.get('port'), function(){

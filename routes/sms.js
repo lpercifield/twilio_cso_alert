@@ -4,7 +4,7 @@
 var util = require('util');
 var isNumeric = require("isnumeric");
 var moment = require('moment-timezone');
-exports.incomingSMS = function(twilio,db,encryption) {
+exports.incomingSMS = function(twilio,twilioRest,db,encryption) {
 return function(req, res) {
 	var twiml = new twilio.TwimlResponse();
 	var message = req.body.Body.trim().toLowerCase();
@@ -111,6 +111,7 @@ twiml.message("Unsubscribe coming soon... use 'status' for CSO status");
 */
 
 				break;
+/*
 			case "report":
 				console.log("report");
 				twiml.message("Report coming soon... use 'status' for CSO status");
@@ -118,6 +119,7 @@ twiml.message("Unsubscribe coming soon... use 'status' for CSO status");
 				res.send(twiml.toString());
 
 				break;
+*/
 			case "stop":
 				console.log("stop");
 				
@@ -138,11 +140,47 @@ twiml.message("Unsubscribe coming soon... use 'status' for CSO status");
 					}
 					if(mes){
 						//twiml.message(mes);
-						twiml.message("For current CSO status send - status. Signup - to receive CSO alerts, Stop - cancel alerts BTW: " + mes);
+						twiml.message("For current CSO status send - status. Signup - to receive CSO alerts, Stop - cancel alerts, About - more info BTW: " + mes);
 					}
 					res.type('text/xml');
 					res.send(twiml.toString());
 				});
+
+				break;
+			case "about":
+				console.log("about");
+				getStatus(db,function(err,mes){
+					if(err){
+						twiml.message("Yikes... somethings wrong...");
+					}
+					if(mes){
+						//twiml.message(mes);
+						twiml.message("Combined Sewer Overflow (CSO) Alert system, created by Newtown Creek Alliance and DontFlush.me with funding from Deutsche Bank - more info: http://goo.gl/2UB0x BTW: " + mes);
+					}
+					res.type('text/xml');
+					res.send(twiml.toString());
+				});
+
+				break;
+			case "report":
+				if(messages[1] != null){
+					console.log("report");
+					sendReport(db,twilioRest,req.body.From,req.body.Body.trim(),function(err,mes){
+						if(err){
+							twiml.message("Yikes... somethings wrong...");
+						}
+						if(mes){
+							//twiml.message(mes);
+							twiml.message(mes);
+						}
+						res.type('text/xml');
+						res.send(twiml.toString());
+					});
+				}else{
+					twiml.message("hmm... looks like the report was empty...");
+					res.type('text/xml');
+					res.send(twiml.toString());
+				}
 
 				break;
 			default:
@@ -164,39 +202,48 @@ exports.sendAlerts = function(twilioRest,db,encryption) {
 		for(var i =0;i<doc.length;i++){
 			var user = doc[i];
 			console.log(util.inspect(user));
-			//Send an SMS text message
-			twilioRest.sendMessage({
-
-		    to:encryption.decrypt(user.number), // Any number Twilio can deliver to
-		    from: '+16465767448', // A number you bought from Twilio and can use for outbound communication
-		    body: 'Watchout! CSOs may be overflowing right now!' // body of the SMS message
-
-			}).then(function(responseData) { //this function is executed when a response is received from Twilio
-
-        // "responseData" is a JavaScript object containing data received from Twilio.
-        // A sample response from sending an SMS message is here (click "JSON" to see how the data appears in JavaScript):
-        // http://www.twilio.com/docs/api/rest/sending-sms#example-1
-
-        //console.log(responseData.to); // outputs "+14506667788"
-        //console.log(responseData.body); // outputs "word to your mother."
-        var newnow = moment().tz("America/New_York").format('lll');
-        var toNum = encryption.encrypt(responseData.to);
-        //user.last_message_sent = newnow;
-        collection.findAndModify({'number':toNum},{$set: {last_message_sent: newnow}},{ upsert: true }, function (err, doc) {
-					if(err){
-						console.log("user save error")
-						//callback(null,"Yikes... somethings wrong...")
-					}
-					if(doc){
-						console.log("looks good")
-						console.log(util.inspect(doc));
-						//callback(null,"Sweet, you're all setup!")
-					}else{
-						console.log("Something else")
-					}
-				});
-			});
-		}
+			var newnow = moment().tz("America/New_York").format('lll');
+			var now = moment(newnow);
+			var timeSinceLastSMS = now.diff(user.last_message_sent,"seconds");
+			console.log("Time since last message: "+timeSinceLastSMS);
+			if(timeSinceLastSMS > 43200){ //43200 = 12 hrs
+				//Send an SMS text message
+				twilioRest.sendMessage({
+	
+			    to:encryption.decrypt(user.number), // Any number Twilio can deliver to
+			    from: '+16465767448', // A number you bought from Twilio and can use for outbound communication
+			    body: 'Watchout! CSOs may be overflowing right now! - reply help, about, or stop' // body of the SMS message
+	
+				}).then(function(responseData) { //this function is executed when a response is received from Twilio
+	
+	        // "responseData" is a JavaScript object containing data received from Twilio.
+	        // A sample response from sending an SMS message is here (click "JSON" to see how the data appears in JavaScript):
+	        // http://www.twilio.com/docs/api/rest/sending-sms#example-1
+	
+	        //console.log(responseData.to); // outputs "+14506667788"
+	        //console.log(responseData.body); // outputs "word to your mother."
+	
+	        var newnow = moment().tz("America/New_York").format('lll');
+	        var toNum = encryption.encrypt(responseData.to);
+	        //user.last_message_sent = newnow;
+	        collection.findAndModify({'number':toNum},{$set: {last_message_sent: newnow}},{ upsert: true }, function (err, doc) {
+						if(err){
+							console.log("user save error")
+							//callback(null,"Yikes... somethings wrong...")
+						}
+						if(doc){
+							console.log("looks good")
+							console.log(util.inspect(doc));
+							//callback(null,"Sweet, you're all setup!")
+						}else{
+							console.log("Something else")
+						}
+					});
+				});//end of sendmessage.then
+			}else{
+				console.log("TOO SOON");
+			}
+		}//end of loop
   });
 	/*
 collection.find().toArray(function(err,doc){
@@ -209,6 +256,40 @@ collection.find().toArray(function(err,doc){
 		}
 	});
 */
+}
+
+function sendReport(db,twilioRest,number,details,callback){
+	var collection = db.get('reports');
+	var newnow = moment().tz("America/New_York").format('lll');
+	var report = {number:number,report_date:newnow,report_details:details.slice(7)};
+	console.log(util.inspect(report));
+	collection.update({'report_date':newnow},report,{ upsert: true }, function (err, doc) {
+		if(err){
+			console.log("user save error")
+			callback(null,"Yikes... somethings wrong...")
+		}
+		if(doc){
+			console.log("looks good")
+			twilioRest.sendMessage({
+			    to:'3478241085', // Any number Twilio can deliver to
+			    from: '+16465767448', // A number you bought from Twilio and can use for outbound communication
+			    body: 'CSO REPORT from: '+ number +' : '+details.slice(7) // body of the SMS message
+			});
+			twilioRest.sendMessage({
+			    to:'7135016400', // Any number Twilio can deliver to
+			    from: '+16465767448', // A number you bought from Twilio and can use for outbound communication
+			    body: 'CSO REPORT from: '+ number +' : '+details.slice(7) // body of the SMS message
+			});/*
+, function(err, text) {
+				console.log('You sent: '+ text.body);
+				console.log('Current status of this text message is: '+ text.status);
+		});
+*/
+			callback(null,"Your report has been submitted, we might be in contact if we need more details - your info is keep private and confidential")
+		}else{
+			console.log("Something else")
+		}
+	});
 }
 
 function getStatus(db,callback){
@@ -258,7 +339,7 @@ function signUp(db,from,callback){
 				}
 				if(doc){
 					console.log("looks good")
-					callback(null,"Sweet, you're all setup!")
+					callback(null,"Welcome - Combined Sewer Overflow (CSO) Alert system, created by Newtown Creek Alliance and DontFlush.me with funding from Deutsche Bank - more info: http://goo.gl/2UB0x reply help for details or stop to cancel")
 				}else{
 					console.log("Something else")
 				}
